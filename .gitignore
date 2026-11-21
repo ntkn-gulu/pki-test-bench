@@ -1,0 +1,13 @@
+# Generated PKI material
+pki/
+*.key
+*.csr
+*.srl
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Test output
+tests/results.json

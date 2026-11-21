@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>G16 PKI</title>
+  <meta name="description" content="Group 16 private PKI: Root CA, Intermediate CA and a localhost certificate, built with OpenSSL.">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/vendor/anime.umd.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand cell" href="#top" aria-label="G16 PKI home">
+        <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.5 20.5 7.25v9.5L12 21.5 3.5 16.75v-9.5Z"/>
+          <path d="M12 2.5v9.5m0 0 8.5-4.75M12 12 3.5 7.25M12 12v9.5" class="brand__inner"/>
+        </svg>
+        <span class="brand__name">g16<span class="brand__dim">/pki</span></span>
+      </a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#top" data-nav="top">Overview</a>
+        <a href="#chain" data-nav="chain">Chain</a>
+        <a href="#validation" data-nav="validation">Validation</a>
+        <a href="#bench" data-nav="bench">Test Bench</a>
+      </nav>
+      <div class="topbar__right">
+        <span class="cell conn" id="conn-pill"><i class="dot"></i><span>connecting…</span></span>
+        <button class="cell icon-btn" id="theme-toggle" type="button" aria-label="Toggle light or dark theme">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.25"/><path d="M12 2.75v2M12 19.25v2M2.75 12h2M19.25 12h2M5.46 5.46l1.41 1.41M17.13 17.13l1.41 1.41M5.46 18.54l1.41-1.41M17.13 6.87l1.41-1.41"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- right rail: section index + ruler with a sliding horizontal marker -->
+  <aside class="rail" id="rail" aria-hidden="true">
+    <div class="rail__ruler"><div class="rail__ticks" id="rail-ticks"></div></div>
+    <div class="rail__slider" id="rail-slider"><span id="rail-pct">000%</span></div>
+    <ol class="rail__past" id="rail-past"></ol>
+    <ol class="rail__next" id="rail-next"></ol>
+  </aside>
+
+  <div class="frame">
+    <main id="top">
+      <!-- 01 · HERO --------------------------------------------------------->
+      <section class="hero" id="hero" data-section="top" data-label="Overview">
+        <div class="bar">
+          <span class="bar__title"><i class="bar__ic"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></i><span><b>01</b>/ Overview</span><span class="bar__q">Is this connection trusted?</span></span>
+          <span class="bar__cap" id="hero-cap">loading…</span>
+        </div>
+        <div class="hero__body">
+          <div class="dots" id="dots" aria-hidden="true"></div>
+          <div class="hero__grid">
+            <div class="hero__text">
+              <div class="hero__chips" id="hero-chips" data-reveal></div>
+              <h1 class="hero__title" id="hero-title" data-reveal>Loading the chain…</h1>
+              <p class="hero__lede" id="hero-lede" data-reveal></p>
+              <p class="hint" id="hero-hint" data-reveal></p>
+            </div>
+            <!-- isometric stack: Root (foundation) → Intermediate → Leaf, drawn by app.js -->
+            <figure class="stack" id="stack" aria-label="Certificate chain illustration" data-reveal>
+              <svg viewBox="0 0 440 345" class="stack__svg" id="stack-svg" aria-hidden="true"></svg>
+            </figure>
+          </div>
+        </div>
+        <dl class="readout" id="readout" data-reveal></dl>
+      </section>
+
+      <!-- 02 · CHAIN -------------------------------------------------------->
+      <section class="section" id="chain" data-section="chain" data-label="Chain">
+        <div class="bar">
+          <span class="bar__title"><i class="bar__ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5l3-3"/><path d="M7 4.5l1-1a2.8 2.8 0 0 1 4 4l-1 1"/><path d="M9 11.5l-1 1a2.8 2.8 0 0 1-4-4l1-1"/></svg></i><span><b>02</b>/ Chain of Trust</span><span class="bar__q">Who signed whom</span></span>
+          <span class="bar__cap" id="chain-cap"></span>
+        </div>
+        <div class="section__body">
+          <header class="section__head">
+            <h2>Three certificates, <span class="hl">one</span> path to trust.</h2>
+            <p class="lede">The server sends the leaf and the intermediate. The root is never sent:
+              the browser already has it in its trust store.</p>
+          </header>
+          <div class="chain" id="chain-list"></div>
+        </div>
+      </section>
+
+      <!-- 03 · VALIDATION --------------------------------------------------->
+      <section class="section" id="validation" data-section="validation" data-label="Validation">
+        <div class="bar">
+          <span class="bar__title"><i class="bar__ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5l1.2 1.2 2-2.2M2.5 10.5l1.2 1.2 2-2.2M8 4.5h5.5M8 10.5h5.5"/></svg></i><span><b>03</b>/ Validation</span><span class="bar__q">How the browser decides</span></span>
+          <span class="bar__cap" id="steps-cap"></span>
+        </div>
+        <div class="section__body">
+          <header class="section__head">
+            <h2>Six checks, on <span class="hl">every</span> connection.</h2>
+            <p class="lede">The same rules a browser applies (report §3.6), re-run by
+              <code>tools/chain_check.py</code> on the chain this port sends, for the name in your address bar.</p>
+          </header>
+          <ol class="steps" id="steps"></ol>
+        </div>
+      </section>
+
+      <!-- 04 · TEST BENCH --------------------------------------------------->
+      <section class="section" id="bench" data-section="bench" data-label="Test Bench">
+        <div class="bar">
+          <span class="bar__title"><i class="bar__ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.5h4M6.8 2.5v4L3.3 12.2a.9.9 0 0 0 .8 1.3h7.8a.9.9 0 0 0 .8-1.3L9.2 6.5v-4M4.8 9.8h6.4"/></svg></i><span><b>04</b>/ Test Bench</span><span class="bar__q">What breaks, and why</span></span>
+          <span class="bar__cap" id="bench-cap">7 ports · 1 valid · 6 broken on purpose</span>
+        </div>
+        <div class="section__body">
+          <header class="section__head">
+            <h2>Break the chain, <span class="hl">one</span> rule at a time.</h2>
+            <p class="lede">Each port serves a certificate that is wrong in exactly one place.
+              This page asks your browser to connect to every port, so each card shows what
+              <i>this</i> browser really decided.</p>
+          </header>
+          <div class="verdict" id="verdict"></div>
+          <div class="bench" id="bench-grid"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span class="mono">HK1 2026 · 502049 · N05 · Group 16</span>
+      <span class="footer__names">Tạ Dưỡng · Nguyễn Thái Khánh Nam</span>
+      <span class="mono footer__built">OpenSSL · Python ssl · anime.js</span>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

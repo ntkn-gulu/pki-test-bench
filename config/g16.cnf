@@ -1,0 +1,93 @@
+# =============================================================================
+#  G16 PKI - OpenSSL configuration
+#  Group 16 (N05) - Build Your Own Certificate Authority
+#
+#  Each [ v3_* ] section is an "extension profile". The scripts choose one
+#  profile with  -extfile config/g16.cnf -extensions <profile>.
+# =============================================================================
+
+[ req ]
+distinguished_name = req_dn
+prompt             = no
+string_mask        = utf8only
+
+[ req_dn ]
+# Placeholder only. The real subject is always given with -subj.
+CN = placeholder
+
+# -----------------------------------------------------------------------------
+#  1. Root CA - top of the chain, self-signed, kept "offline" (password key)
+# -----------------------------------------------------------------------------
+[ v3_root_ca ]
+basicConstraints       = critical, CA:TRUE
+keyUsage               = critical, keyCertSign, cRLSign
+subjectKeyIdentifier   = hash
+
+# -----------------------------------------------------------------------------
+#  2. Intermediate CA - signs leaf certificates only
+#     pathlen:0        -> cannot create another CA below it
+#     nameConstraints  -> may only issue for localhost / 127.0.0.1
+# -----------------------------------------------------------------------------
+[ v3_intermediate_ca ]
+basicConstraints       = critical, CA:TRUE, pathlen:0
+keyUsage               = critical, keyCertSign, cRLSign
+nameConstraints        = critical, permitted;DNS:localhost, permitted;IP:127.0.0.1/255.255.255.255
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always
+
+# -----------------------------------------------------------------------------
+#  3. Leaf certificate for the web server (the valid one, port 8443)
+# -----------------------------------------------------------------------------
+[ v3_leaf ]
+basicConstraints       = critical, CA:FALSE
+keyUsage               = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = serverAuth
+subjectAltName         = DNS:localhost, IP:127.0.0.1
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always
+
+# =============================================================================
+#  NEGATIVE TEST PROFILES (PKI Test Bench)
+#  Each profile is wrong in exactly ONE place, so the error has one cause.
+# =============================================================================
+
+# 8444 - Wrong name: valid for DNS:localhost only (no IP).
+#        Open it as https://127.0.0.1:8444  ->  name mismatch.
+[ v3_leaf_dns_only ]
+basicConstraints       = critical, CA:FALSE
+keyUsage               = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = serverAuth
+subjectAltName         = DNS:localhost
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always
+
+# 8445 - Expired: same extensions as v3_leaf, dates are set in the script.
+
+# 8446 - Missing SAN: only CN=localhost in the subject, no subjectAltName.
+[ v3_leaf_no_san ]
+basicConstraints       = critical, CA:FALSE
+keyUsage               = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = serverAuth
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always
+
+# 8447 - Leaf used as a CA (CVE-2011-0228): this profile is correct by itself.
+#        The problem is WHO signs it: the localhost leaf key (CA:FALSE).
+
+# 8448 - Name Constraints violation: the intermediate signs a name
+#        that is outside its permitted subtree (evil.example).
+[ v3_leaf_nc_violation ]
+basicConstraints       = critical, CA:FALSE
+keyUsage               = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = serverAuth
+subjectAltName         = DNS:localhost, IP:127.0.0.1, DNS:evil.example
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always
+
+# 8449 - Self-signed leaf that does not belong to the G16 chain.
+[ v3_self_signed ]
+basicConstraints       = critical, CA:FALSE
+keyUsage               = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = serverAuth
+subjectAltName         = DNS:localhost, IP:127.0.0.1
+subjectKeyIdentifier   = hash
