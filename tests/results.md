@@ -1,6 +1,6 @@
 # Test Results Matrix
 
-Measured 2026-11-20 14:11 +0700 by `tests/run_matrix.py`. ✅ = accepted · ❌ = rejected (reason).
+Measured 2026-11-23 16:06 +0700 by `tests/run_matrix.py`. ✅ = accepted · ❌ = rejected (reason).
 
 | Port | Scenario | Expected (browser) | `openssl verify` | `Python ssl` | `curl / Schannel` | `chain_check fixed` | `chain_check vulnerable` | Edge | Firefox |
 |---|---|---|---|---|---|---|---|---|---|
